@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { CreateUserInput } from './dto/create-user.input';
 import { UpdateUserInput } from './dto/update-user.input';
 import { UsersRepository } from './users.repository';
@@ -9,12 +13,21 @@ export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async create(createUserInput: CreateUserInput) {
-    const encryptedPassword = await this.hashPassword(createUserInput.password);
+    try {
+      const encryptedPassword = await this.hashPassword(
+        createUserInput.password,
+      );
 
-    return this.usersRepository.create({
-      ...createUserInput,
-      password: encryptedPassword,
-    });
+      return this.usersRepository.create({
+        ...createUserInput,
+        password: encryptedPassword,
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new UnprocessableEntityException('Email already exists');
+      }
+      throw error;
+    }
   }
 
   async findAll() {
@@ -44,6 +57,18 @@ export class UsersService {
 
   async remove(_id: string) {
     return this.usersRepository.findOneAndDelete({ _id });
+  }
+
+  async verifyUser(email: string, password: string) {
+    const user = await this.usersRepository.findOne({ email });
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Error logging in');
+    }
+
+    return user;
   }
 
   private async hashPassword(password: string) {
