@@ -4,8 +4,7 @@ import { graphql } from '../gql';
 const getMeDocument = graphql(`
   query getMe {
     me {
-      _id
-      email
+      ...UserFragment
     }
   }
 `);

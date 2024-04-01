@@ -13,7 +13,10 @@ interface IChatListItemProps {
   selected: boolean;
 }
 
-export function ChatListItem({ chat: { _id, name }, selected }: IChatListItemProps) {
+export function ChatListItem({
+  chat: { _id, name, latestMessage },
+  selected,
+}: IChatListItemProps) {
   return (
     <>
       <ListItem alignItems='flex-start' disablePadding>
@@ -34,16 +37,16 @@ export function ChatListItem({ chat: { _id, name }, selected }: IChatListItemPro
                   variant='body2'
                   color='text.primary'
                 >
-                  Ali Connors
+                  {latestMessage?.user.username || ''}
                 </Typography>
-                {" — I'll be in your neighborhood doing errands this…"}
+                {' ' + (latestMessage?.content || '')}
               </Fragment>
             }
           />
         </ListItemButton>
       </ListItem>
 
-      <Divider variant='inset' component='li' />
+      <Divider variant='inset' />
     </>
   );
 }

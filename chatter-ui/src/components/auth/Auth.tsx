@@ -6,11 +6,18 @@ import { useNavigate } from 'react-router-dom';
 interface IAuthProps {
   submitLabel: string;
   onSubmit: (email: string, password: string) => any;
+  extraFields?: React.ReactNode[];
   children: React.ReactNode;
   error?: string;
 }
 
-export function Auth({ onSubmit, submitLabel, children, error }: IAuthProps) {
+export function Auth({
+  onSubmit,
+  submitLabel,
+  children,
+  error,
+  extraFields,
+}: IAuthProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { data } = useGetMe();
@@ -46,6 +53,7 @@ export function Auth({ onSubmit, submitLabel, children, error }: IAuthProps) {
           error={!!error}
           helperText={error}
         />
+        {extraFields}
         <TextField
           type='password'
           label='Password'

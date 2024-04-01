@@ -1,31 +1,85 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateChatInput } from './dto/create-chat.input';
 import { UpdateChatInput } from './dto/update-chat.input';
 import { ChatsRepository } from './chats.repository';
+import { PipelineStage, Types } from 'mongoose';
+import { PaginationArgs } from 'src/common/dto/pagination-args.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ChatsService {
-  constructor(private readonly chatsRepository: ChatsRepository) {}
+  constructor(
+    private readonly chatsRepository: ChatsRepository,
+    private readonly usersService: UsersService,
+  ) {}
 
   async create(createChatInput: CreateChatInput, userId: string) {
     return this.chatsRepository.create({
       ...createChatInput,
-      user_ids: createChatInput.userIds || [],
-      userId,
       messages: [],
+      userId,
     });
   }
 
-  async findAll(userId: string) {
-    return this.chatsRepository.find({
-      ...this.userChatFilter(userId),
+  async findAll(
+    prePipelineStages: PipelineStage[] = [],
+    paginationArgs?: PaginationArgs,
+  ) {
+    const chats = await this.chatsRepository.model.aggregate([
+      ...prePipelineStages,
+      {
+        $set: {
+          latestMessage: {
+            $cond: [
+              '$messages',
+              { $arrayElemAt: ['$messages', -1] },
+              {
+                createdAt: new Date(),
+              },
+            ],
+          },
+        },
+      },
+      { $unset: 'messages' },
+      { $sort: { 'latestMessage.createdAt': -1 } },
+      { $skip: paginationArgs?.skip },
+      { $limit: paginationArgs?.limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'latestMessage.userId',
+          foreignField: '_id',
+          as: 'latestMessage.user',
+        },
+      },
+    ]);
+
+    chats.forEach((chat) => {
+      if (!chat.latestMessage?._id) {
+        delete chat.latestMessage;
+        return;
+      }
+
+      chat.latestMessage.user = this.usersService.toEntity(
+        chat.latestMessage.user[0],
+      );
+      delete chat.latestMessage.userId;
+      chat.latestMessage.chatId = chat._id;
     });
+
+    return chats;
   }
 
-  findOne(_id: string) {
-    return this.chatsRepository.findOne({
-      _id,
-    });
+  async findOne(_id: string) {
+    const chats = await this.findAll([
+      { $match: { chatId: new Types.ObjectId(_id) } },
+    ]);
+
+    if (!chats[0]) {
+      throw new NotFoundException('Chat not found');
+    }
+
+    return chats[0];
   }
 
   public userChatFilter(userId: string) {
@@ -40,6 +94,10 @@ export class ChatsService {
         { isPrivate: false },
       ],
     };
+  }
+
+  async getChatsCount() {
+    return this.chatsRepository.model.countDocuments();
   }
 
   update(id: number, updateChatInput: UpdateChatInput) {

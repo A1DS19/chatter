@@ -20,7 +20,7 @@ export class AuthService {
 
     const tokenPayload: TokenPayload = {
       _id: user._id,
-      email: user.email,
+      ...user,
     };
 
     const token = this.jwtService.sign(tokenPayload);

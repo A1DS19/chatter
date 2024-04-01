@@ -120,22 +120,32 @@ export function Header() {
                   const isLogout = setting === 'Logout';
                   if (isLogout) {
                     return (
-                      <MenuItem
-                        key={setting}
-                        onClick={async () => {
-                          try {
-                            await logout();
-                            onLogout();
-                            handleCloseUserMenu();
-                          } catch (error) {
-                            snackVar(UNKNOW_ERROR_SNACK_MESSAGE);
-                          }
-                        }}
-                      >
-                        <Typography textAlign='center' color='error'>
-                          {setting}
-                        </Typography>
-                      </MenuItem>
+                      <>
+                        <MenuItem
+                          key={'profile'}
+                          onClick={() => router.navigate('/profile')}
+                        >
+                          <Typography textAlign='center' color='textSecondary'>
+                            Profile
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem
+                          key={setting}
+                          onClick={async () => {
+                            try {
+                              await logout();
+                              onLogout();
+                              handleCloseUserMenu();
+                            } catch (error) {
+                              snackVar(UNKNOW_ERROR_SNACK_MESSAGE);
+                            }
+                          }}
+                        >
+                          <Typography textAlign='center' color='error'>
+                            {setting}
+                          </Typography>
+                        </MenuItem>
+                      </>
                     );
                   }
 
