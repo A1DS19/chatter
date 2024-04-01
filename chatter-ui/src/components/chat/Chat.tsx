@@ -107,7 +107,10 @@ export function Chat() {
                     key={message._id}
                   >
                     <Grid item xs={3} lg={1}>
-                      <Avatar src='' sx={{ width: 52, height: 52 }} />
+                      <Avatar
+                        src={message.user.imageUrl}
+                        sx={{ width: 52, height: 52 }}
+                      />
                     </Grid>
 
                     <Grid item xs={10} md={11}>

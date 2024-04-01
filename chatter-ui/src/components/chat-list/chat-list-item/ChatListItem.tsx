@@ -25,7 +25,7 @@ export function ChatListItem({
           selected={selected}
         >
           <ListItemAvatar>
-            <Avatar alt='Remy Sharp' src='/static/images/avatar/1.jpg' />
+            <Avatar alt='Remy Sharp' src={latestMessage?.user.imageUrl} />
           </ListItemAvatar>
           <ListItemText
             primary={name}
